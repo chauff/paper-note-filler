@@ -80,7 +80,7 @@ export default class PaperNoteFillerPlugin extends Plugin {
 		this.addSettingTab(new SettingTab(this.app, this));
 	}
 
-	onunload() {}
+	onunload() { }
 
 	async loadSettings() {
 		this.settings = Object.assign(
@@ -216,29 +216,29 @@ class arXivModal extends Modal {
 								.create(
 									pathToFile,
 									"# Title" +
-										"\n" +
-										trimString(title) +
-										"\n\n" +
-										"# Authors" +
-										"\n" +
-										trimString(authorString) +
-										"\n\n" +
-										"# URL" +
-										"\n" +
-										trimString(url) +
-										"\n\n" +
-										"# Publication date" +
-										"\n" +
-										trimString(date) +
-										"\n\n" +
-										"# Abstract" +
-										"\n" +
-										trimString(abstract) +
-										"\n\n" +
-										"# Tags" +
-										"\n\n" +
-										"# Notes" +
-										"\n\n"
+									"\n" +
+									trimString(title) +
+									"\n\n" +
+									"# Authors" +
+									"\n" +
+									trimString(authorString) +
+									"\n\n" +
+									"# URL" +
+									"\n" +
+									trimString(url) +
+									"\n\n" +
+									"# Publication date" +
+									"\n" +
+									trimString(date) +
+									"\n\n" +
+									"# Abstract" +
+									"\n" +
+									trimString(abstract) +
+									"\n\n" +
+									"# Tags" +
+									"\n\n" +
+									"# Notes" +
+									"\n\n"
 								)
 								.then(() => {
 									this.app.workspace.openLinkText(
@@ -281,18 +281,18 @@ class SettingTab extends PluginSettingTab {
 		let folders = this.app.vault
 			.getFiles()
 			.map((file) =>
-				//file.path.split(path.sep).slice(0, -1).join(path.sep);
-				{
-					let parts = file.path.split(path.sep);
-					parts.pop(); //ignore the filename
+			//file.path.split(path.sep).slice(0, -1).join(path.sep);
+			{
+				let parts = file.path.split(path.sep);
+				parts.pop(); //ignore the filename
 
-					//now return all path combinations
-					let res: string[] = [];
-					for (let i = 0; i < parts.length; i++) {
-						res.push(parts.slice(0, i + 1).join(path.sep));
-					}
-					return res;
+				//now return all path combinations
+				let res: string[] = [];
+				for (let i = 0; i < parts.length; i++) {
+					res.push(parts.slice(0, i + 1).join(path.sep));
 				}
+				return res;
+			}
 			)
 			.flat()
 			.filter((folder, index, self) => self.indexOf(folder) === index);
@@ -303,7 +303,7 @@ class SettingTab extends PluginSettingTab {
 		});
 
 		//also add the root folder
-		folderOptions[STRING_MAP.get("settingFolderRoot")!] = "";
+		folderOptions[""] = STRING_MAP.get("settingFolderRoot")!;
 
 		let namingOptions: Record<string, string> = {};
 		NAMING_TYPES.forEach((record) => {
