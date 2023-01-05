@@ -20,7 +20,7 @@ Expand this plugin beyond arXiv. [ACL Anthology](https://aclanthology.org/) and 
 
 1. Head to the vault folder (the following command assumes it is in the home directory in the `obsidian-vault` directory) and traverse into the plugin directory: `~/obsidian-vault/.obsidian/plugins/`.
 2. Create a new directory called `paper-note-filler`.
-3. Copy over `main.js`, `styles.css`, `manifest.json` to the just created directory.
+3. Copy `main.js`, `styles.css`, `manifest.json` [from the latest release](https://github.com/chauff/paper-note-filler/releases/latest) to the just created directory. _This is all, the remaining files are not necessary._
 4. Restart Obsidian.
 
 _Ideally, this is it and the plugin is now installed._ A simple way to check this is to now open the settings tab of Obsidian. Everything worked if the `Paper Note Filling` plugin listed under Community Plugins. If not, check the `community-plugins.json` file in the `/plugins` folder and add the plugin name manually if necessary and then restart Obsidian one more time.
