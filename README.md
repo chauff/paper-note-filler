@@ -8,14 +8,15 @@ This plugin was created in one evening, it works but is brittle. Only created an
 
 ## Manually installing the plugin
 
-1. Head to your vault folder and traverse into the plugin directory: `~obsidian-vault/.obsidian/plugins/`.
+1. Head to your vault folder (the following command assumes it is in your home directory) and traverse into the plugin directory: `~/obsidian-vault/.obsidian/plugins/`.
 2. Create a new directory called `paper-note-filler`.
 3. Copy over `main.js`, `styles.css`, `manifest.json` to the just created directory.
 4. Restart Obsidian.
+5. Open the settings tab of Obsidian. You should see the `Paper Note Filling` plugin listed under Community Plugins.
 
 ## Using the plugin
 
-1. Open the settings tab of Obsidian. You should see the `Paper Note Filling Plugin` listed under Community Plugins. There are two settings to consider: the folder in which to create the notes and the naming convention for each note.
+1. Open the settings tab of Obsidian. You should see the `Paper Note Filling` plugin listed under Community Plugins. If not, make sure that There are two settings to consider: the folder in which to create the notes and the naming convention for each note.
 2. Now whenever you want to create a note based on an arXiv URL, open the command palette, find the `Create paper note from an arXiv.org URL.` and then paste the arXiv URL into the input field. Press <kbd>Enter</kbd> and a note with the paper title, authors, url, abstract, etc. should be created. If the file already exists, it will not be overwritten.
 
 ## Develop it further yourself
