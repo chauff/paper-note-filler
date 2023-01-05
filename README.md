@@ -2,7 +2,9 @@
 
 <img align="right" width="200" height="200" src="img/logo.jpeg" alt="Logo">
 
-Instead of manually copying and pasting paper title, abstract, etc. from [arxiv.org](https://arxiv.org/) into an Obsidian note, just copy the URL and the plugin extracts the important information automatically and creates a new Obsidian note. The location and naming of the note can be changed as desired.
+This plugin solves a single annoyance for me when it comes to taking notes about ML/NLP/IR papers - 95% of which happen to be available on [arxiv.org](https://arxiv.org/): the constant copy and paste to fill in a note template (author, title, etc.).
+
+So, instead of manually creating one [Obsidian](https://obsidian.md/) note per paper for a [zettelkasten](https://beingpax.medium.com/zettelkasten-method-with-obsidian-how-to-take-smart-notes-with-examples-cdaf348febbd), simply provide the URL and the plugin extracts the important information and creates a new note automatically.
 
 > **Note**
 > This plugin was created in one evening, it works but is naturally very brittle. Only created and tested for arxiv.org URLs in January 2023. Only tested on Desktop.
