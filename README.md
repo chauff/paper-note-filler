@@ -1,6 +1,6 @@
 # arXiv URL to Obsidian Note
 
-<img align="right" width="150" height="150" src="img/logo.jpeg" alt="Logo">
+<img align="right" width="200" height="200" src="img/logo.jpeg" alt="Logo">
 
 Instead of manually copying and pasting paper title, abstract, etc. from [arxiv.org](https://arxiv.org/) into an Obsidian note, just copy the URL and the plugin extracts the important information automatically and creates a new Obsidian note. The location and naming of the note can be changed as desired.
 
@@ -9,9 +9,12 @@ Instead of manually copying and pasting paper title, abstract, etc. from [arxiv.
 
 ## TODOs
 
-Expand this plugin beyond arXiv. [ACL Anthology](https://aclanthology.org/) and [neurIPS](https://papers.nips.cc/) are high up on the list.
+Expand this plugin beyond arXiv. [ACL Anthology](https://aclanthology.org/) and [neurIPS](https://papers.nips.cc/) are next.
 
-## Manually installing the plugin
+## Installing the plugin manually
+
+> **Note**
+> The plugin is not available via the Obsidian Hub as it takes quite a long time to get through the PR queue and the review process. This plugin is so niche and simple that it is not really worth it. So, manual installation it is.
 
 1. Head to the vault folder (the following command assumes it is in the home directory in the `obsidian-vault` directory) and traverse into the plugin directory: `~/obsidian-vault/.obsidian/plugins/`.
 2. Create a new directory called `paper-note-filler`.
