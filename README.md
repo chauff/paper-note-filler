@@ -1,6 +1,6 @@
 # arXiv URL to Obsidian Note
 
-<img align="right" width="200" height="200" src="img/logo.jpeg" alt="Logo">
+<img align="right" width="250" height="250" src="img/logo.jpeg" alt="Logo">
 
 This plugin solves a single annoyance for me when it comes to taking notes about ML/NLP/IR papers - 95% of which happen to be available on [arxiv.org](https://arxiv.org/): the constant copy and paste to fill in a note template (author, title, etc.).
 
