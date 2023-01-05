@@ -1,89 +1,93 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import {
+	App,
+	Modal,
+	Notice,
+	Plugin,
+	PluginSettingTab,
+	Setting,
+} from "obsidian";
 
-// Remember to rename these classes and interfaces!
+import { stopwords } from "./english-stopwords";
 
-interface MyPluginSettings {
-	mySetting: string;
+const path = require("path");
+
+const NAMING_TYPES: string[] = [
+	"identifier",
+	"first-3-title-terms",
+	"first-3-title-terms-no-stopwords",
+	"first-5-title-terms",
+	"first-5-title-terms-no-stopwords",
+	"all-title-terms",
+];
+
+const DEFAULT_SETTINGS: PaperNoteFillerPluginSettings = {
+	folderLocation: "",
+	fileNaming: NAMING_TYPES[0],
+};
+
+//create a string map for all the strings we need
+const STRING_MAP: Map<string, string> = new Map([
+	[
+		"invaliArXivURL",
+		"The URL is not valid for arXiv.org. You tried to enter: ",
+	],
+	[
+		"fileAlreadyExists",
+		"Unable to create note. File already exists. Opening existing file.",
+	],
+	["arXivCommandId", "arXiv-to-paper-note"],
+	["arXivCommandName", "Create paper note from an arXiv.org URL."],
+	["arXivInputLabel", "Enter an arXiv.org URL"],
+	["arXivInputPlaceHolder", "https://arxiv.org/abs/0000.00000"],
+	["arxivUrlPrefix", "https://arxiv.org/abs/"],
+	["arXivRestAPI", "https://export.arxiv.org/api/query?id_list="],
+	["settingHeader", "Settings to create paper notes."],
+	["settingFolderName", "Folder"],
+	["settingFolderDesc", "Folder to create paper notes in."],
+	["settingFolderRoot", "(root of the vault)"],
+	["settingNoteName", "Note naming"],
+	["settingNoteDesc", "Method to name the note."],
+]);
+
+function trimString(str: string | null): string {
+	if (str == null) return "";
+
+	return str.replace(/\s+/g, " ").trim();
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+interface PaperNoteFillerPluginSettings {
+	folderLocation: string;
+	fileNaming: string;
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class PaperNoteFillerPlugin extends Plugin {
+	settings: PaperNoteFillerPluginSettings;
 
 	async onload() {
+		console.log("Loading Paper Note Filler plugin.");
+
 		await this.loadSettings();
-
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
 
 		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
+			id: STRING_MAP.get("arXivCommandId")!,
+			name: STRING_MAP.get("arXivCommandName")!,
 			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-			}
+				new arXivModal(this.app, this.settings).open();
+			},
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		this.addSettingTab(new SettingTab(this.app, this));
 	}
 
-	onunload() {
-
-	}
+	onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
 	}
 
 	async saveSettings() {
@@ -91,47 +95,245 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
+class arXivModal extends Modal {
+	settings: PaperNoteFillerPluginSettings;
+
+	constructor(app: App, settings: PaperNoteFillerPluginSettings) {
 		super(app);
+		this.settings = settings;
 	}
 
 	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
+		const { contentEl } = this;
+
+		contentEl.createEl("h2", { text: STRING_MAP.get("arXivInputLabel") });
+		let input = contentEl.createEl("input");
+		input.type = "search"; //gets us neat looking CSS
+		input.placeholder = STRING_MAP.get("arXivInputPlaceHolder")!;
+		input.minLength = input.placeholder.length;
+		input.style.width = "75%";
+
+		contentEl.addEventListener("keydown", (event) => {
+			if (event.key !== "Enter") return;
+
+			//we only want this event to trigger once
+			event.preventDefault();
+
+			//get the URL from the input field
+			let url = input.value;
+			console.log("HTTP request: " + url);
+
+			//URL sanity check
+			if (
+				!url.toLowerCase().startsWith(STRING_MAP.get("arxivUrlPrefix")!)
+			) {
+				new Notice(STRING_MAP.get("invaliArXivURL") + url);
+			} else {
+				//paper id
+				let id = url.split("/").slice(-1)[0]; //hardcoded separator ok ... it is a URL
+
+				//retrieve from the arXiv API
+				fetch(STRING_MAP.get("arXivRestAPI")! + id)
+					.then((response) => response.text())
+					.then(async (data) => {
+						//parse the XML
+						let parser = new DOMParser();
+						let xmlDoc = parser.parseFromString(data, "text/xml");
+
+						let title =
+							xmlDoc.getElementsByTagName("title")[1].textContent;
+						let abstract =
+							xmlDoc.getElementsByTagName("summary")[0]
+								.textContent;
+						let authors = xmlDoc.getElementsByTagName("author");
+						let authorString = "";
+						for (let i = 0; i < authors.length; i++) {
+							if (i > 0) {
+								authorString += ", ";
+							}
+							authorString +=
+								authors[i].getElementsByTagName("name")[0]
+									.textContent;
+						}
+						let date =
+							xmlDoc.getElementsByTagName("published")[0]
+								.textContent;
+						if (date) date = date.split("T")[0]; //make the date human-friendly
+
+						let filename = id;
+						if (
+							this.settings.fileNaming !== "identifier" &&
+							title != null
+						) {
+							let sliceEnd = undefined; //default to all terms
+							if (
+								this.settings.fileNaming.includes(
+									"first-3-title-terms"
+								)
+							)
+								sliceEnd = 3;
+							else if (
+								this.settings.fileNaming.includes(
+									"first-5-title-terms"
+								)
+							)
+								sliceEnd = 5;
+							else;
+
+							filename = title
+								.split(" ")
+								.filter(
+									(word) =>
+										!stopwords.has(word.toLowerCase()) ||
+										!this.settings.fileNaming.includes(
+											"no-stopwords"
+										)
+								)
+								.slice(0, sliceEnd)
+								.join(" ")
+								.replace(/[^a-zA-Z0-9 ]/g, "");
+						}
+
+						//create a new paper note with the id as the name in the folderlocation folder
+						//and the content being the title, authors, date, abstract and comment
+						let pathToFile =
+							this.settings.folderLocation +
+							path.sep +
+							filename +
+							".md";
+
+						//notification if the file already exists
+						if (await this.app.vault.adapter.exists(pathToFile)) {
+							new Notice(
+								STRING_MAP.get("fileAlreadyExists") + ""
+							);
+							this.app.workspace.openLinkText(
+								pathToFile,
+								pathToFile
+							);
+						} else {
+							await this.app.vault
+								.create(
+									pathToFile,
+									"# Title" +
+										"\n" +
+										trimString(title) +
+										"\n\n" +
+										"# Authors" +
+										"\n" +
+										trimString(authorString) +
+										"\n\n" +
+										"# URL" +
+										"\n" +
+										trimString(url) +
+										"\n\n" +
+										"# Publication date" +
+										"\n" +
+										trimString(date) +
+										"\n\n" +
+										"# Abstract" +
+										"\n" +
+										trimString(abstract) +
+										"\n\n" +
+										"# Tags" +
+										"\n\n" +
+										"# Notes" +
+										"\n\n"
+								)
+								.then(() => {
+									this.app.workspace.openLinkText(
+										pathToFile,
+										pathToFile
+									);
+								});
+						}
+
+						//close the modal
+						this.close();
+					});
+			}
+		});
 	}
 
 	onClose() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.empty();
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+class SettingTab extends PluginSettingTab {
+	plugin: PaperNoteFillerPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: PaperNoteFillerPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		containerEl.createEl("h2", {
+			text: STRING_MAP.get("settings"),
+		});
+
+		let folders = this.app.vault
+			.getFiles()
+			.map((file) =>
+				//file.path.split(path.sep).slice(0, -1).join(path.sep);
+				{
+					let parts = file.path.split(path.sep);
+					parts.pop(); //ignore the filename
+
+					//now return all path combinations
+					let res: string[] = [];
+					for (let i = 0; i < parts.length; i++) {
+						res.push(parts.slice(0, i + 1).join(path.sep));
+					}
+					return res;
+				}
+			)
+			.flat()
+			.filter((folder, index, self) => self.indexOf(folder) === index);
+
+		let folderOptions: Record<string, string> = {};
+		folders.forEach((record) => {
+			folderOptions[record] = record;
+		});
+
+		//also add the root folder
+		folderOptions[STRING_MAP.get("settingFolderRoot")!] = "";
+
+		let namingOptions: Record<string, string> = {};
+		NAMING_TYPES.forEach((record) => {
+			namingOptions[record] = record;
+		});
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
+			.setName(STRING_MAP.get("settingFolderName")!)
+			.setDesc(STRING_MAP.get("settingFolderDesc")!)
+			/* create dropdown menu with all folders currently in the vault */
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOptions(folderOptions)
+					.setValue(this.plugin.settings.folderLocation)
+					.onChange(async (value) => {
+						this.plugin.settings.folderLocation = value;
+						await this.plugin.saveSettings();
+					})
+			);
+		new Setting(containerEl)
+			.setName(STRING_MAP.get("settingNoteName")!)
+			.setDesc(STRING_MAP.get("settingNoteDesc")!)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOptions(namingOptions)
+					.setValue(this.plugin.settings.fileNaming)
+					.onChange(async (value) => {
+						this.plugin.settings.fileNaming = value;
+						await this.plugin.saveSettings();
+					})
+			);
 	}
 }

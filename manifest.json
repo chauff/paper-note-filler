@@ -1,11 +1,10 @@
 {
-	"id": "obsidian-sample-plugin",
-	"name": "Sample Plugin",
+	"id": "paper-note-filler",
+	"name": "Paper Note Filling Plugin",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
-	"isDesktopOnly": false
+	"description": "Take an arxiv.org URL and automatically create an Obsidian note from it.",
+	"author": "Claudia Hauff",
+	"authorUrl": "https://github.com/chauff",
+	"isDesktopOnly": true
 }
