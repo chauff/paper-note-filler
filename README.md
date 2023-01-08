@@ -2,16 +2,20 @@
 
 <img align="right" width="250" height="250" src="img/logo.jpeg" alt="Logo">
 
-This plugin solves a single annoyance for me when it comes to taking notes about ML/NLP/IR papers - 95% of which happen to be available on [arxiv.org](https://arxiv.org/): the constant copy and paste to fill in a note template (author, title, etc.).
+This plugin solves a single annoyance for me when it comes to taking notes about ML/NLP/IR papers - 90% of which happen to be available on [arxiv.org](https://arxiv.org/): the constant copy and paste to fill in a note template (author, title, etc.).
 
-So, instead of manually creating one [Obsidian](https://obsidian.md/) note per paper for a [zettelkasten](https://beingpax.medium.com/zettelkasten-method-with-obsidian-how-to-take-smart-notes-with-examples-cdaf348febbd), simply provide the URL and the plugin extracts the important information and creates a new note automatically.
+Instead of manually creating one [Obsidian](https://obsidian.md/) note per paper for a [zettelkasten](https://beingpax.medium.com/zettelkasten-method-with-obsidian-how-to-take-smart-notes-with-examples-cdaf348febbd), simply provide the URL and the plugin extracts the important information and creates a new note automatically.
+
+This (mostly) works for paper URLs from three domains:
+
+- arxiv.org, e.g. https://arxiv.org/abs/2111.13057 
+- aclanthology, e.g. https://aclanthology.org/2022.acl-long.3/
+- semantischolar, e.g. https://www.semanticscholar.org/paper/Feature-Engineering-for-Second-Language-Acquisition-Chen-Hauff/75033c495638dcb2fb8ebc6211e5e5e0e8b93ea6
+
+If it is an arxiv paper, the ArXiv API is queried. The ACL Anthology isn't as simple to query, and since Semantic Scholar has most of the data ingested, the [Semantic Scholar API](https://www.semanticscholar.org/product/api) is queried with the respective aclanthology/semanticscholar identifier.
 
 > **Note**
-> This plugin was created in one evening, it works but is naturally very brittle. Only created and tested for arxiv.org URLs in January 2023. Only tested on Desktop.
-
-## TODOs
-
-Expand this plugin beyond arXiv. [ACL Anthology](https://aclanthology.org/) and [neurIPS](https://papers.nips.cc/) are next.
+> This plugin was created in two evenings, it works but is brittle. Only tested on Desktop.
 
 ## Installing the plugin manually
 
@@ -32,19 +36,19 @@ _Ideally, this is it and the plugin is now installed._ A simple way to check thi
 Open the settings tab of Obsidian. There should be the `Paper Note Filling` plugin listed under Community Plugins. There are two settings:
 
 1. The folder in which to create all notes (any folder from inside the vault or the root folder itself).
-2. The naming convention for each note (either using the arxiv ID or the title of the paper).
+2. The naming convention for each note (either using the respective identifier or the title of the paper).
 
 <img src="img/settings.png" width="600" alt="Obsidian settings tab">
 
 ### Creating a note
 
-To create a note based on an arXiv URL, open the command palette, and find the `Create paper note from an arXiv.org URL.`
+To create a note, open the command palette, and find the `Paper Note Filling:Create paper note from URL.`
 
 <img src="img/command-palette.png" width="600" alt="Obsidian command palette">
 
-Clicking the command brings up a dialogue in which to paste the arXiv URL:
+Clicking the command brings up a dialogue in which to paste the URL:
 
-<img src="img/input.png" width="600" alt="Obsidian arXiv URL input">
+<img src="img/input.png" width="600" alt="Obsidian URL input">
 
 Press <kbd>Enter</kbd> and a note with the paper title, authors, url, abstract, etc. should be created. If the file already exists, it will not be overwritten. The end result (here with the [Blue Topaz Obsidian theme](https://github.com/whyt-byte/Blue-Topaz_Obsidian-css)) looks something like this:
 
