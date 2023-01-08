@@ -1,4 +1,4 @@
-# arXiv URL to Obsidian Note
+# Academic paper URL to Obsidian Note
 
 <img align="right" width="250" height="250" src="img/logo.jpeg" alt="Logo">
 
