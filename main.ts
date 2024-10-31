@@ -5,9 +5,16 @@ import {
 	Plugin,
 	PluginSettingTab,
 	Setting,
+	requestUrl
 } from "obsidian";
 
 import { stopwords } from "./english-stopwords";
+import { prompts } from "./prompts";
+
+//**********
+//DEBUG flag: console.log non-error statements enabled
+//**********
+const DEBUG = true
 
 const path = require("path");
 
@@ -23,18 +30,25 @@ const NAMING_TYPES: string[] = [
 const DEFAULT_SETTINGS: PaperNoteFillerPluginSettings = {
 	folderLocation: "",
 	fileNaming: NAMING_TYPES[0],
+	openAIKey: "N/A",
+	openAIModel: "gpt-4o-mini",
+	openAIEndpoint: "https://api.openai.com/v1/chat/completions"
 };
 
-//create a string map for all the strings we need
+//all strings ever needed can be found here
 const STRING_MAP: Map<string, string> = new Map([
 	[
 		"error", "Something went wrong. Check the Obsidian console if the error persists."
+	],
+	[
+		"openAIError", "Something went wrong when querying OpenAI. Check the Obsidian console if the error persists."
 	],
 	["unsupportedUrl", "This URL is not supported. You tried to enter: "],
 	[
 		"fileAlreadyExists",
 		"Unable to create note. File already exists. Opening existing file.",
 	],
+	["semanticScholarError", "Error fetching data from Semantic Scholar"],
 	["commandId", "url-to-paper-note"],
 	["commandName", "Create paper note from URL."],
 	["inputLabel1", "Enter a valid URL."],
@@ -54,8 +68,16 @@ const STRING_MAP: Map<string, string> = new Map([
 	["settingFolderRoot", "(root of the vault)"],
 	["settingNoteName", "Note naming"],
 	["settingNoteDesc", "Method to name the note."],
+	["settingOpenAIName", "OpenAI key"],
+	["settingOpenAIDesc", `Provide a valid OpenAI key for LLM integration, otherwise use '${DEFAULT_SETTINGS.openAIKey}'.`],
+	["settingOpenAIModelName", "OpenAI model name"],
+	["settingOpenAIModelDesc", "Provide the name of an OpenAI model suitable for chat completion, e.g. gpt-4o-mini."],
+	["settingOpenAIEndpointName", "OpenAI chat endpoint"],
+	["settingOpenAIEndpointDesc", "Provide a valid OpenAI chat completion endpoint, e.g. https://api.openai.com/v1/chat/completions."],
 	["noticeRetrievingArxiv", "Retrieving paper information from arXiv API."],
 	["noticeRetrievingSS", "Retrieving paper information from Semantic Scholar API."],
+	["llmMarker", "💻"]
+
 ]);
 
 function trimString(str: string | null): string {
@@ -67,14 +89,15 @@ function trimString(str: string | null): string {
 interface PaperNoteFillerPluginSettings {
 	folderLocation: string;
 	fileNaming: string;
+	openAIKey: string;
+	openAIModel: string;
+	openAIEndpoint: string;
 }
 
 export default class PaperNoteFillerPlugin extends Plugin {
 	settings: PaperNoteFillerPluginSettings;
 
 	async onload() {
-		console.log("Loading Paper Note Filler plugin.");
-
 		await this.loadSettings();
 
 		this.addCommand({
@@ -133,6 +156,70 @@ class urlModal extends Modal {
 		return url.split("/").slice(-1)[0];
 	}
 
+	//generic prompting of OpenAI model(s)
+	async fetchOpenAICompletion(prompt: string): Promise<string> {
+		const payload = {
+			model: this.settings.openAIModel,
+			messages: [{ role: "user", content: prompt }],
+			temperature: 0.0 //no uncertainty
+		};
+
+		const response = await fetch(this.settings.openAIEndpoint, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"Authorization": `Bearer ${this.settings.openAIKey}`
+			},
+			body: JSON.stringify(payload)
+		});
+
+		if (!response.ok) {
+			throw new Error(`Error ${response.status}: ${response.statusText}`);
+		}
+
+		const data = await response.json();
+		return data.choices[0].message.content;
+	}
+
+	query_llm(): boolean {
+		if (this.settings.openAIKey == DEFAULT_SETTINGS.openAIKey) {
+			return false;
+		}
+		return true;
+	}
+
+	extractFutureWork(paper: string): Promise<string> {
+		if (this.query_llm() == false) {
+			return Promise.resolve("");
+		}
+
+		const future_prompt = `${prompts.get('futureWork')}\n\nPaper: ${paper}`
+		return this.fetchOpenAICompletion(future_prompt)
+			.catch(error => {
+				new Notice(STRING_MAP.get("openAIError")!);
+				console.log(error);
+				return "";
+			});
+	}
+
+	generateTagsFromAbstract(abstract: string): Promise<string> {
+		if (this.query_llm() == false) {
+			return Promise.resolve("");
+		}
+
+		const availableTags = app.metadataCache.getTags()//not part of .d.ts but works for now
+		const tagsString = Object.keys(availableTags).join(' ');
+
+		const tag_prompt = `${prompts.get('generateTags')}\n\nAbstract: ${abstract}\n\nAvailable hashtags: ${tagsString}`;
+
+		return this.fetchOpenAICompletion(tag_prompt)
+			.catch(error => {
+				new Notice(STRING_MAP.get("openAIError")!);
+				console.log(error);
+				return "";
+			});
+	}
+
 	extractFileNameFromUrl(url: string, title: string): string {
 
 		let filename = this.getIdentifierFromUrl(url);
@@ -166,232 +253,173 @@ class urlModal extends Modal {
 		return filename;
 	}
 
-	//both arxiv and aclanthology papers can be queried via the Semantic Scholar API
-	extractFromSemanticScholar(url: string) {
-
-		let id = this.getIdentifierFromUrl(url);
-		console.log("paper id: " + id);
-
-		let suffix = "INVALID";
-		if (url.toLowerCase().includes("arxiv"))
-			suffix = STRING_MAP.get("arxivUrlSuffix")!;
-		else if (url.toLowerCase().includes("aclanthology"))
-			suffix = STRING_MAP.get("aclAnthologyUrlSuffix")!;
-		else if (url.toLowerCase().includes("semanticscholar"))
-			suffix = "";
-		else;
-
-		if (suffix === "INVALID") {
-			console.log("Invalid url: " + url);
-			new Notice("Error: For now, only semanticscholar, arxiv and anthology URLs are supported.");
+	async generateNoteContent(
+		pathToFile: string,
+		title: string,
+		authorString: string,
+		url: string,
+		htmlData: string,
+		venue: string,
+		publicationDate: string,
+		abstract: string
+	): Promise<void> {
+		// Check if the file already exists
+		if (await this.app.vault.adapter.exists(pathToFile)) {
+			new Notice(STRING_MAP.get("fileAlreadyExists")!);
+			this.app.workspace.openLinkText(pathToFile, pathToFile);
 			return;
 		}
 
-		fetch(STRING_MAP.get("semanticScholarAPI")! + suffix + id + "?" + STRING_MAP.get("semanticScholarFields")!)
+		let tags = await this.generateTagsFromAbstract(abstract);
+		if (tags.length >= 3) {
+			tags = `${STRING_MAP.get("llmMarker")} ${tags}`
+		}
+
+		let futureWork = "";
+		if (htmlData.length > 50) {
+			futureWork = await this.extractFutureWork(htmlData);
+		}
+
+		if (futureWork.length >= 10) {
+			futureWork = `${STRING_MAP.get("llmMarker")} ${futureWork}`;
+		}
+
+		// Create the file and open it
+		await this.app.vault.create(
+			pathToFile,
+			"# Title" +
+			"\n" +
+			trimString(title) +
+			"\n\n" +
+			"# Authors" +
+			"\n" +
+			trimString(authorString) +
+			"\n\n" +
+			"# URL" +
+			"\n" +
+			url +
+			"\n\n" +
+			"# Venue" +
+			"\n" +
+			trimString(venue) +
+			"\n\n" +
+			"# Publication date" +
+			"\n" +
+			trimString(publicationDate) +
+			"\n\n" +
+			"# Abstract" +
+			"\n" +
+			trimString(abstract) +
+			"\n\n" +
+			"# Tags" +
+			"\n" +
+			tags +
+			"\n\n" +
+			"# Notes" +
+			"\n" +
+			"- " + futureWork
+		)
+		await this.app.workspace.openLinkText(pathToFile, pathToFile);
+	}
+
+	parseMetadataFromSemanticScholar(data: string): { title: string; authorString: string; venue: string; publicationDate: string; abstract: string; url: string } {
+		const json = JSON.parse(data);
+
+		if (json.error) {
+			throw new Error(STRING_MAP.get("semanticScholarError"));
+		}
+
+		const title = json.title || "undefined";
+		const abstract = json.abstract || "";
+		const authors = json.authors.map((author: { name: string }) => author.name).join(", ");
+		const venue = json.venue ? `${json.venue} ${json.year}` : "";
+		const publicationDate = json.publicationDate || "";
+		const url = json.url;
+
+		return { title, authorString: authors, venue, publicationDate, abstract, url };
+	}
+
+	extractFromSemanticScholar(url: string) {
+		const id = this.getIdentifierFromUrl(url);
+		const suffix = url.includes("arxiv") ? STRING_MAP.get("arxivUrlSuffix")! :
+			url.includes("aclanthology") ? STRING_MAP.get("aclAnthologyUrlSuffix")! : "";
+
+		if (suffix === "") {
+			new Notice(STRING_MAP.get("unsupportedUrl")! + url);
+			return;
+		}
+
+		const htmlData = ""; //does not exist for semanticscholar
+
+		fetch(`${STRING_MAP.get("semanticScholarAPI")!}${suffix}${id}?${STRING_MAP.get("semanticScholarFields")!}`)
 			.then((response) => response.text())
-			.then(async (data) => {
-
-				let json = JSON.parse(data);
-
-				if (json.error != null) {
-					new Notice("Error: " + json.error);
-					return;
-				}
-
-				let title = json.title;
-				let abstract = json.abstract;
-
-				let authors = json.authors;
-				let authorString = "";
-				for (let i = 0; i < authors.length; i++) {
-					if (i > 0) {
-						authorString += ", ";
-					}
-					authorString += authors[i].name;
-				}
-
-				let venue = "";
-				if (json.venue != null && json.venue != "")
-					venue = json.venue + " " + json.year;
-
-				let publicationDate = json.publicationDate;
-
-				if (title == null) title = "undefined";
-				let filename = this.extractFileNameFromUrl(url, title);
-
-				let semanticScholarURL = json.url;
-				if (json["externalIds"] && json["externalIds"]["ArXiv"]) {
-					semanticScholarURL += "\n" + "https://arxiv.org/abs/" + json.externalIds["ArXiv"];
-				}
-				if (json["externalIds"] && json["externalIds"]["ACL]"]) {
-					semanticScholarURL += "\n" + "https://aclanthology.org/" + json.externalIds["ACL"];
-				}
-
-				let pathToFile = this.settings.folderLocation +
-					path.sep +
-					filename +
-					".md";
-
-				//notification if the file already exists
-				if (await this.app.vault.adapter.exists(pathToFile)) {
-					new Notice(
-						STRING_MAP.get("fileAlreadyExists") + ""
-					);
-					this.app.workspace.openLinkText(
-						pathToFile,
-						pathToFile
-					);
-				} else {
-					await this.app.vault
-						.create(
-							pathToFile,
-							"# Title" +
-							"\n" +
-							trimString(title) +
-							"\n\n" +
-							"# Authors" +
-							"\n" +
-							trimString(authorString) +
-							"\n\n" +
-							"# URL" +
-							"\n" +
-							semanticScholarURL +
-							"\n\n" +
-							"# Venue" +
-							"\n" +
-							trimString(venue) +
-							"\n\n" +
-							"# Publication date" +
-							"\n" +
-							trimString(publicationDate) +
-							"\n\n" +
-							"# Abstract" +
-							"\n" +
-							trimString(abstract) +
-							"\n\n" +
-							"# Tags" +
-							"\n\n\n" +
-							"# Notes" +
-							"\n"
-						)
-						.then(() => {
-							this.app.workspace.openLinkText(
-								pathToFile,
-								pathToFile
-							);
-						});
-				}
+			.then((data) => {
+				const { title, authorString, venue, publicationDate, abstract, url } = this.parseMetadataFromSemanticScholar(data);
+				const filename = this.extractFileNameFromUrl(url, title);
+				const pathToFile = `${this.settings.folderLocation}${path.sep}${filename}.md`;
+				this.generateNoteContent(pathToFile, title, authorString, url, htmlData, venue, publicationDate, abstract);
 			})
 			.catch((error) => {
-				//convert the Notice to a notice with a red background
 				new Notice(STRING_MAP.get("error")!);
-
-				console.log(error);
+				console.error(error);
 			})
 			.finally(() => {
 				this.close();
 			});
 	}
 
-
-	//if semantic scholar misses, we try arxiv
 	extractFromArxiv(url: string) {
-
-		let id = this.getIdentifierFromUrl(url);
+		const id = this.getIdentifierFromUrl(url);
 
 		fetch(STRING_MAP.get("arXivRestAPI")! + id)
 			.then((response) => response.text())
-			.then(async (data) => {
-				//parse the XML
-				let parser = new DOMParser();
-				let xmlDoc = parser.parseFromString(data, "text/xml");
+			.then((data) => {
+				const parser = new DOMParser();
+				const xmlDoc = parser.parseFromString(data, "text/xml");
 
-				let title =
-					xmlDoc.getElementsByTagName("title")[1].textContent;
-				let abstract =
-					xmlDoc.getElementsByTagName("summary")[0]
-						.textContent;
-				let authors = xmlDoc.getElementsByTagName("author");
-				let authorString = "";
-				for (let i = 0; i < authors.length; i++) {
-					if (i > 0) {
-						authorString += ", ";
-					}
-					authorString +=
-						authors[i].getElementsByTagName("name")[0]
-							.textContent;
-				}
-				let date =
-					xmlDoc.getElementsByTagName("published")[0]
-						.textContent;
-				if (date) date = date.split("T")[0]; //make the date human-friendly
+				const title = xmlDoc.getElementsByTagName("title")[1]?.textContent || "undefined";
+				const abstract = xmlDoc.getElementsByTagName("summary")[0]?.textContent || "";
+				const authors = Array.from(xmlDoc.getElementsByTagName("author")).map(
+					(author) => author.getElementsByTagName("name")[0]?.textContent || ""
+				).join(", ");
+				const publicationDate = xmlDoc.getElementsByTagName("published")[0]?.textContent?.split("T")[0] || "";
 
-				if (title == null) title = "undefined";
-				let filename = this.extractFileNameFromUrl(url, title);
+				const filename = this.extractFileNameFromUrl(url, title);
+				const pathToFile = `${this.settings.folderLocation}${path.sep}${filename}.md`;
 
-				let pathToFile = this.settings.folderLocation +
-					path.sep +
-					filename +
-					".md";
+				const venue = ""; //arxiv has no venue field
 
-				//notification if the file already exists
-				if (await this.app.vault.adapter.exists(pathToFile)) {
-					new Notice(
-						STRING_MAP.get("fileAlreadyExists") + ""
-					);
-					this.app.workspace.openLinkText(
-						pathToFile,
-						pathToFile
-					);
-				} else {
-					await this.app.vault
-						.create(
-							pathToFile,
-							"# Title" +
-							"\n" +
-							trimString(title) +
-							"\n\n" +
-							"# Authors" +
-							"\n" +
-							trimString(authorString) +
-							"\n\n" +
-							"# URL" +
-							"\n" +
-							trimString(url) +
-							"\n\n" +
-							"# Venue" +
-							"\n\n\n" +
-							"# Publication date" +
-							"\n" +
-							trimString(date) +
-							"\n\n" +
-							"# Abstract" +
-							"\n" +
-							trimString(abstract) +
-							"\n\n" +
-							"# Tags" +
-							"\n\n" +
-							"# Notes" +
-							"\n\n"
-						)
-						.then(() => {
-							this.app.workspace.openLinkText(
-								pathToFile,
-								pathToFile
-							);
-						});
-				}
+				const urlHtmlVersion = url.replace("/abs/", "/html/") + "v1";
+				let htmlData = "";
+
+				return requestUrl(urlHtmlVersion)
+					.then((htmlResponse) => {
+						const buffer = htmlResponse.arrayBuffer;
+						const decoder = new TextDecoder("utf-8");
+						htmlData = decoder.decode(buffer);
+
+						const htmlParser = new DOMParser();
+						const htmlDoc = htmlParser.parseFromString(htmlData, "text/html");
+						htmlData = htmlDoc.body.textContent || "";
+
+						if (DEBUG == true) {
+							console.log(htmlData)
+						}
+					})
+					.catch((htmlError) => {
+						console.log(htmlError);
+						htmlData = "";
+					})
+					.finally(() => {
+						this.generateNoteContent(pathToFile, title, authors, url, htmlData, venue, publicationDate, abstract);
+						this.close();
+					});
 			})
 			.catch((error) => {
-				//convert the Notice to a notice with a red background
-				new Notice(STRING_MAP.get("error")!);
-
-				console.log(error);
-			})
-			.finally(() => {
-				this.close();
+				console.error("Error fetching arXiv metadata:", error);
 			});
 	}
+
 
 	onOpen() {
 		const { contentEl } = this;
@@ -418,7 +446,10 @@ class urlModal extends Modal {
 
 			if (!extracting) {
 				extracting = true;
-				console.log("HTTP request: " + url);
+
+				if (DEBUG == true) {
+					console.log("HTTP request: " + url);
+				}
 
 				if (url.includes("arxiv.org")) {
 					new Notice(STRING_MAP.get("noticeRetrievingArxiv")!);
@@ -480,11 +511,7 @@ class SettingTab extends PluginSettingTab {
 		//also add the root folder
 		folderOptions[""] = STRING_MAP.get("settingFolderRoot")!;
 
-		let namingOptions: Record<string, string> = {};
-		NAMING_TYPES.forEach((record) => {
-			namingOptions[record] = record;
-		});
-
+		//1. Setting: Folder in which to store the papers in (1 file per paper)
 		new Setting(containerEl)
 			.setName(STRING_MAP.get("settingFolderName")!)
 			.setDesc(STRING_MAP.get("settingFolderDesc")!)
@@ -498,6 +525,13 @@ class SettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
+
+		let namingOptions: Record<string, string> = {};
+		NAMING_TYPES.forEach((record) => {
+			namingOptions[record] = record;
+		});
+
+		//2. Setting: File naming based on the title of the paper
 		new Setting(containerEl)
 			.setName(STRING_MAP.get("settingNoteName")!)
 			.setDesc(STRING_MAP.get("settingNoteDesc")!)
@@ -508,6 +542,45 @@ class SettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.fileNaming = value;
 						await this.plugin.saveSettings();
+					})
+			);
+
+		//3. OpenAI key (optional)
+		new Setting(containerEl)
+			.setName(STRING_MAP.get("settingOpenAIName")!)
+			.setDesc(STRING_MAP.get("settingOpenAIDesc")!)
+			.addText((text) =>
+				text
+					.setValue(this.plugin.settings.openAIKey)
+					.onChange(async (value) => {
+						this.plugin.settings.openAIKey = value;
+						await this.plugin.saveSettings()
+					})
+			);
+
+		//4. OpenAI model name (optional)
+		new Setting(containerEl)
+			.setName(STRING_MAP.get("settingOpenAIModelName")!)
+			.setDesc(STRING_MAP.get("settingOpenAIModelDesc")!)
+			.addText((text) =>
+				text
+					.setValue(this.plugin.settings.openAIModel)
+					.onChange(async (value) => {
+						this.plugin.settings.openAIModel = value;
+						await this.plugin.saveSettings()
+					})
+			);
+
+		//5. OpenAI chat completions url (optional)
+		new Setting(containerEl)
+			.setName(STRING_MAP.get("settingOpenAIEndpointName")!)
+			.setDesc(STRING_MAP.get("settingOpenAIEndpointDesc")!)
+			.addText((text) =>
+				text
+					.setValue(this.plugin.settings.openAIEndpoint)
+					.onChange(async (value) => {
+						this.plugin.settings.openAIEndpoint = value;
+						await this.plugin.saveSettings()
 					})
 			);
 	}

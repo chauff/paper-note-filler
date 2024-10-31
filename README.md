@@ -4,7 +4,7 @@
 
 This plugin solves a single annoyance for me when it comes to taking notes about ML/NLP/IR papers - 90% of which happen to be available on [arxiv.org](https://arxiv.org/): the constant copy and paste to fill in a note template (author, title, etc.).
 
-Instead of manually creating one [Obsidian](https://obsidian.md/) note per paper for a [zettelkasten](https://beingpax.medium.com/zettelkasten-method-with-obsidian-how-to-take-smart-notes-with-examples-cdaf348febbd), simply provide the URL and the plugin extracts the important information and creates a new note automatically.
+Instead of manually creating one [Obsidian](https://obsidian.md/) note per paper for a [zettelkasten](https://beingpax.medium.com/zettelkasten-method-with-obsidian-how-to-take-smart-notes-with-examples-cdaf348febbd), simply provide the URL and the plugin extracts the important information and creates a new note automatically. Basic OpenAI integration is available (but not required to be used) so that data can be extracted from a paper automatically.
 
 This (mostly) works for paper URLs from three domains:
 
@@ -57,14 +57,17 @@ _Ideally, this is it and the plugin is now installed._ A simple way to check thi
 
 ## Using the plugin
 
-### Two settings
+### Three settings
 
-Open the settings tab of Obsidian. There should be the `Paper Note Filling` plugin listed under Community Plugins. There are two settings:
+Open the settings tab of Obsidian. There should be the `Paper Note Filling` plugin listed under Community Plugins. There are three settings, the first two of which are required. 
 
 1. The folder in which to create all notes (any folder from inside the vault or the root folder itself).
 2. The naming convention for each note (either using the respective identifier or the title of the paper).
+3. An optional OpenAI key field. Here, some fields of the note are auto-generated using an OpenAI chat endpoint. This requires a positive credit balance as API requests are not covered by a chatGPT subscription. The OpenAI credit balance can be checked [here](https://platform.openai.com/settings/organization/billing/overview). If the provided OpenAI key is incorrect or does not have sufficient funds associated with it a short notice appears. To avoid these notices, simply fill in `N/A` in the OpenAI key field. 
+4. The plugin isn't updated very often. To avoid issues when OpenAI models are updated, the model name and chat endpoint need to be provided. For now, `gpt-4o-mini` (name) and `https://api.openai.com/v1/chat/completions` (endpoint) will work.
 
 <img src="img/settings.png" width="600" alt="Obsidian settings tab">
+
 
 ### Creating a note
 
@@ -80,6 +83,19 @@ Press <kbd>Enter</kbd> and a note with the paper title, authors, url, abstract, 
 
 <img src="img/output.png" width="600" alt="Obsidian created paper note">
 
-## Developing it further
+## Developing the plugin further
 
-Not hard as the plugin is straightforward and just a few hundred lines of code. Check out the instructions of the [Obsidian Sample Plugin repo](https://github.com/obsidianmd/obsidian-sample-plugin) to get started.
+If you are missing functionality in the plugin, continue developing it further (and make a PR if you feel up for it). The plugin is straightforward and just a few hundred lines of code. The [Obsidian Docs](https://docs.obsidian.md/Plugins/Getting+started/Build+a+plugin) contain a lot of information about how to develp your own plugin or adapt existing ones.
+
+In short:
+1. This time we want to install the source and compile ourselves. If you already installed the plugin as described above, delete the `paper-note-filler` folder again. Clone the repository to the `plugins` directory of your Obsidian vault and `cd` into it:
+    
+    ```
+    cd [my-obsidian-vault-folder]/.obsidian/plugins/
+    rm -r paper-note-filler
+    git clone https://github.com/chauff/paper-note-filler
+    cd paper-note-filler
+    ```
+2. Run `npm install`. If you don't have `npm` yet, you will need to install it first. If you have `npm` but are getting an error, check your `Node` version (and update it if necessary via `nvm install node`) and then try again `npm install`.
+3. Run `npm run dev`. If all goes well, you now find a generated `main.js` file in your folder -- that is the compiled version of the plugin. That's it, the plugin is now compiled and ready to use. Updating the code will trigger a recompile.
+4. Lastly, to actually see the output of the `console.log()` statements littered throughout the code, open the developer tools of Obsidian by heading to `View >> Toggle Developer Tools`.
