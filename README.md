@@ -24,10 +24,34 @@ _Why querying ArXiv separately? Although Semantic Scholar also ingests papers po
 > **Note**
 > The plugin is not available via the Obsidian Hub as it takes quite a long time to get through the PR queue and the review process. This plugin is so niche and simple that it is not really worth it. So, manual installation it is.
 
-1. Head to the vault folder (the following command assumes it is in the home directory in the `obsidian-vault` directory) and traverse into the plugin directory: `~/obsidian-vault/.obsidian/plugins/`.
-2. Create a new directory called `paper-note-filler`.
-3. Copy `main.js`, `styles.css`, `manifest.json` [from the latest release](https://github.com/chauff/paper-note-filler/releases/latest) to the just created directory. _This is all, the remaining files are not necessary._
-4. Restart Obsidian.
+1. Locate your vault folder and note down the path. You can find the folder name at the bottom left of your Obsidian window. If you click on the name, and then `Manage vaults` you see the full path to the vault folder.
+
+2. Open the terminal and `cd` into the `.plugin` directory inside your vault folder. For example, if your vault folder is inside your home directory and is called `my-obsidian-notes`, you do:
+
+    ```bash
+    cd ~/my-obsidian-notes/.obsidian/plugins/
+    ```
+
+3. Create a new directory called `paper-note-filler` inside the `plugins` directory and `cd` into it:
+
+    ```bash
+    mkdir paper-note-filler
+    cd paper-note-filler
+    ```
+
+4. Download `main.js`, `styles.css`, `manifest.json` [from the latest release](https://github.com/chauff/paper-note-filler/releases/latest) (not the cloned github repo!) to the just created directory.
+
+    ```bash
+    curl -LO https://github.com/chauff/paper-note-filler/releases/download/1.0.1/main.js
+    curl -LO https://github.com/chauff/paper-note-filler/releases/download/1.0.1/styles.css
+    curl -LO https://github.com/chauff/paper-note-filler/releases/download/1.0.1/manifest.json
+    ``` 
+
+    Check with `ls -al` if the three files are now appearing in the `paper-note-filler` folder. Make sure they are not empty (`more manifest.json` should show a few lines of JSON). 
+    
+    If the files are empty (GitHub downloads are not always straightforward with `curl`), use the browser, head to [the release page](https://github.com/chauff/paper-note-filler/releases/latest), download those three files via the browser and then move them into the `paper-note-filler` directory. 
+
+5. Restart Obsidian.
 
 _Ideally, this is it and the plugin is now installed._ A simple way to check this is to now open the settings tab of Obsidian. Everything worked if the `Paper Note Filling` plugin listed under Community Plugins. If not, check the `community-plugins.json` file in the `/plugins` folder and add the plugin name manually if necessary and then restart Obsidian one more time.
 
