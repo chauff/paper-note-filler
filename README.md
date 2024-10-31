@@ -4,7 +4,9 @@
 
 This plugin solves a single annoyance for me when it comes to taking notes about ML/NLP/IR papers - 90% of which happen to be available on [arxiv.org](https://arxiv.org/): the constant copy and paste to fill in a note template (author, title, etc.).
 
-Instead of manually creating one [Obsidian](https://obsidian.md/) note per paper for a [zettelkasten](https://beingpax.medium.com/zettelkasten-method-with-obsidian-how-to-take-smart-notes-with-examples-cdaf348febbd), simply provide the URL and the plugin extracts the important information and creates a new note automatically. Basic OpenAI integration is available (but not required to be used) so that data can be extracted from a paper automatically.
+Instead of manually creating one [Obsidian](https://obsidian.md/) note per paper for a [zettelkasten](https://beingpax.medium.com/zettelkasten-method-with-obsidian-how-to-take-smart-notes-with-examples-cdaf348febbd), simply provide the URL and the plugin extracts the important information and creates a new note automatically. 
+
+*Update 10/204*: Basic OpenAI integration is available (but not required to be used) to generate tags and extract future work directions for papers where arxiv offers an HTML version.
 
 This (mostly) works for paper URLs from three domains:
 
@@ -68,6 +70,16 @@ Open the settings tab of Obsidian. There should be the `Paper Note Filling` plug
 
 <img src="img/settings.png" width="600" alt="Obsidian settings tab">
 
+### OpenAI
+
+There is nothing fancy going on under the hood, the prompts are listed in [prompts.ts](prompts.ts):
+- The tag selection prompt provides the LLM with an abstract and a list of all tags used in the vault and asks it to select up to five tags that fit the abstract.
+- The future work extraction prompt provides the LLM with raw text (not LaTeX but HTML -> text) and asks it to summarize the future work directions.
+
+In both cases, it is possible that the LLM calls fail (either because the endpoint changed, insufficient funds, etc.). In this case nothing further happens, apart from a notice on the screen. Setting the OpenAI key in the Settings tab to `N/A` avoids these notices.
+
+Anything generated/extracted with an LLM is prefixed by 💻.
+
 
 ### Creating a note
 
@@ -98,4 +110,9 @@ In short:
     ```
 2. Run `npm install`. If you don't have `npm` yet, you will need to install it first. If you have `npm` but are getting an error, check your `Node` version (and update it if necessary via `nvm install node`) and then try again `npm install`.
 3. Run `npm run dev`. If all goes well, you now find a generated `main.js` file in your folder -- that is the compiled version of the plugin. That's it, the plugin is now compiled and ready to use. Updating the code will trigger a recompile.
-4. Lastly, to actually see the output of the `console.log()` statements littered throughout the code, open the developer tools of Obsidian by heading to `View >> Toggle Developer Tools`.
+4. To actually see the output of the `console.log()` statements littered throughout the code, open the developer tools of Obsidian by heading to `View >> Toggle Developer Tools`.
+5. In [.github/workflows](.github/workflows/) a GitHub action is defined that triggers a new release after the following steps are taken (more details [here](https://docs.obsidian.md/Plugins/Releasing/Release+your+plugin+with+GitHub+Actions)):
+   1. Update the code.
+   2. Once happy, increment the version number in [manifest.json](manifest.json), let's assume the version number increases from `1.0.2` to `1.0.3`. Commit.
+   3. Then create a tag that matches the new version number by running `git tag -a 1.0.3 -m "1.0.3"` and then `git push origin 1.0.3`
+   4. Check the Actions tab on GitHub, it should now be running the "Release Obsidian plugin" action (this can take some time).
