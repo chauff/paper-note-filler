@@ -128,4 +128,8 @@ In short:
    2. Once happy, increment the version number in [manifest.json](manifest.json), let's assume the version number increases from `1.0.2` to `1.0.3`. Commit.
    3. Then create a tag that matches the new version number by running `git tag -a 1.0.3 -m "1.0.3"` and then `git push origin 1.0.3`
    4. Check the Actions tab on GitHub, it should now be running the "Release Obsidian plugin" action (this can take some time).
-   5. If there are build issues, and it isn't an error in the plugin itself, it is probably about outdated package versions. Check step 3 above.
+   5. If there are build issues, and it isn't an error in the plugin itself, it is probably about outdated package versions.
+   6. If for some reason the build fails and you want to retrigger the build without updating the versioning do this:
+      1. Delete the tag number locally `git tag -d 1.0.3`
+      2. Recreate the tag `git tag 1.0.3`
+      3. Force push to trigger the workflow `git push -f origin 1.0.3`
