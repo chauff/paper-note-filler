@@ -71,7 +71,7 @@ Open the settings tab of Obsidian. There should be the `Paper Note Filling` plug
 
 <img src="img/settings.png" width="600" alt="Obsidian settings tab">
 
-### OpenAIi integration
+### OpenAI integration
 
 There is nothing fancy going on under the hood, the prompts are listed in [prompts.ts](prompts.ts):
 - The tag selection prompt provides the LLM with an abstract and a list of all tags used in the vault and asks it to select up to five tags that fit the abstract.
