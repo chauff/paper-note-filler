@@ -207,7 +207,7 @@ class urlModal extends Modal {
 			return Promise.resolve("");
 		}
 
-		const availableTags = this.app.metadataCache.getTags()//not part of .d.ts but works for now
+		const availableTags = (this.app.metadataCache as any).getTags();
 		const tagsString = Object.keys(availableTags).join(' ');
 
 		const tag_prompt = `${prompts.get('generateTags')}\n\nAbstract: ${abstract}\n\nAvailable hashtags: ${tagsString}`;
