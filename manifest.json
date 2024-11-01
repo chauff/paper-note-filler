@@ -1,7 +1,7 @@
 {
 	"id": "paper-note-filler",
 	"name": "Paper Note Filling",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"minAppVersion": "0.15.0",
 	"description": "Obsidian plugin to automatically create a note from ArXiv.org, ACL Anthology and Semantic Scholar.",
 	"author": "Claudia Hauff",
