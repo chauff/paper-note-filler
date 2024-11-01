@@ -74,7 +74,7 @@ Open the settings tab of Obsidian. There should be the `Paper Note Filling` plug
 ### OpenAI integration
 
 There is nothing fancy going on under the hood, the prompts are listed in [prompts.ts](prompts.ts):
-- The tag selection prompt provides the LLM with an abstract and a list of all tags used in the vault and asks it to select up to five tags that fit the abstract.
+- The tag selection prompt provides the LLM with an abstract and a list of all tags used in the vault and asks it to select up to five tags that fit the abstract. Since this is based on cached metadata, this will not pick up any new tags added during the ongoing Obsidian session. If you introduce new tags and want the LLM to be able to select those as well, you need to restart Obsidian.
 - The future work extraction prompt provides the LLM with raw text (not LaTeX but HTML -> text) and asks it to summarize the future work directions. This is only possible for papers from arXiv that are availble in arXiv's experimental HTML format.
 
 In both cases, it is possible that the LLM calls fail (either because the endpoint changed, insufficient funds, etc.). In this case nothing further happens, apart from a notice on the screen. Setting the OpenAI key in the Settings tab to `N/A` avoids these notices.
