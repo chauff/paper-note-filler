@@ -108,10 +108,11 @@ In short:
     git clone https://github.com/chauff/paper-note-filler
     cd paper-note-filler
     ```
-2. Run `npm install`. If you don't have `npm` yet, you will need to install it first. If you have `npm` but are getting an error, check your `Node` version (and update it if necessary via `nvm install node --reinstall-packages-from=node`) and then try again `npm install`.
-3. Run `npm run dev`. If all goes well, you now find a generated `main.js` file in your folder -- that is the compiled version of the plugin. That's it, the plugin is now compiled and ready to use. Updating the code will trigger a recompile.
-4. To actually see the output of the `console.log()` statements littered throughout the code, open the developer tools of Obsidian by heading to `View >> Toggle Developer Tools`.
-5. In [.github/workflows](.github/workflows/) a GitHub action is defined that triggers a new release after the following steps are taken (more details [here](https://docs.obsidian.md/Plugins/Releasing/Release+your+plugin+with+GitHub+Actions)):
+2. Run `npm install`. If you don't have `npm` yet, you will need to install it first. If you haven't used `npm` in a long time, update it: `npm install -g npm@latest`. If you are still getting an error, check your `Node` version (and update it if necessary via `nvm install node --reinstall-packages-from=node`) and then try again `npm install`.
+3. Over time the packages listed in [package-lock.json](package-lock.json) and [package.json](package.json) become outdated. Check for dependcy updates by running `npm outdated` and update each listed package. Then run `npx npm-check-updates -u` to change the `package*.json` files. Rerun your build: `npm install`.
+4. Run `npm run dev`. If all goes well, you now find a generated `main.js` file in your folder -- that is the compiled version of the plugin. That's it, the plugin is now compiled and ready to use. Updating the code will trigger a recompile.
+5. To actually see the output of the `console.log()` statements littered throughout the code, open the developer tools of Obsidian by heading to `View >> Toggle Developer Tools`.
+6. In [.github/workflows](.github/workflows/) a GitHub action is defined that triggers a new release after the following steps are taken (more details [here](https://docs.obsidian.md/Plugins/Releasing/Release+your+plugin+with+GitHub+Actions)):
    1. Update the code.
    2. Once happy, increment the version number in [manifest.json](manifest.json), let's assume the version number increases from `1.0.2` to `1.0.3`. Commit.
    3. Then create a tag that matches the new version number by running `git tag -a 1.0.3 -m "1.0.3"` and then `git push origin 1.0.3`
