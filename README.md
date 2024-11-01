@@ -59,14 +59,15 @@ _Ideally, this is it and the plugin is now installed._ A simple way to check thi
 
 ## Using the plugin
 
-### Three settings
+### Five settings
 
-Open the settings tab of Obsidian. There should be the `Paper Note Filling` plugin listed under Community Plugins. There are three settings, the first two of which are required. 
+Open the settings tab of Obsidian. There should be the `Paper Note Filling` plugin listed under Community Plugins. There are five settings, the first two of which are required; the remaining three are OpenAI related.
 
 1. The folder in which to create all notes (any folder from inside the vault or the root folder itself).
 2. The naming convention for each note (either using the respective identifier or the title of the paper).
 3. An optional OpenAI key field. Here, some fields of the note are auto-generated using an OpenAI chat endpoint. This requires a positive credit balance as API requests are not covered by a chatGPT subscription. The OpenAI credit balance can be checked [here](https://platform.openai.com/settings/organization/billing/overview). If the provided OpenAI key is incorrect or does not have sufficient funds associated with it a short notice appears. To avoid these notices, simply fill in `N/A` in the OpenAI key field. 
-4. The plugin isn't updated very often. To avoid issues when OpenAI models are updated, the model name and chat endpoint need to be provided. For now, `gpt-4o-mini` (name) and `https://api.openai.com/v1/chat/completions` (endpoint) will work.
+4. The plugin isn't updated very often. To avoid issues when OpenAI models are updated, the model name is set manually. For now, `gpt-4o-mini` works.
+5. The same goes for the chat completion endpoint. For now, `https://api.openai.com/v1/chat/completions` works.
 
 <img src="img/settings.png" width="600" alt="Obsidian settings tab">
 
