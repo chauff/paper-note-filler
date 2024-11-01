@@ -1,6 +1,6 @@
 {
 	"name": "paper-note-filler",
-	"version": "1.0.0",
+	"version": "1.0.3",
 	"description": "Take an arxiv.org URL and automatically create an Obsidian note from it.",
 	"main": "main.js",
 	"scripts": {
