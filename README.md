@@ -44,9 +44,9 @@ _Why querying arXiv separately? Although Semantic Scholar also ingests papers po
 4. Download `main.js`, `styles.css`, `manifest.json` [from the latest release](https://github.com/chauff/paper-note-filler/releases/latest) (not the cloned github repo!) to the just created directory.
 
     ```bash
-    curl -LO https://github.com/chauff/paper-note-filler/releases/download/1.0.1/main.js
-    curl -LO https://github.com/chauff/paper-note-filler/releases/download/1.0.1/styles.css
-    curl -LO https://github.com/chauff/paper-note-filler/releases/download/1.0.1/manifest.json
+    curl -LO https://github.com/chauff/paper-note-filler/releases/download/1.0.5/main.js
+    curl -LO https://github.com/chauff/paper-note-filler/releases/download/1.0.5/styles.css
+    curl -LO https://github.com/chauff/paper-note-filler/releases/download/1.0.5/manifest.json
     ``` 
 
     Check with `ls -al` if the three files are now appearing in the `paper-note-filler` folder. Make sure they are not empty (`more manifest.json` should show a few lines of JSON). 
