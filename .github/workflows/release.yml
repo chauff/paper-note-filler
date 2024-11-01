@@ -17,6 +17,9 @@ jobs:
         with:
           node-version: "18.x"
 
+      - name: Clear npm cache
+        run: npm cache clean --force
+
       - name: Build plugin
         run: |
           npm install

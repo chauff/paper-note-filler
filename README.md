@@ -6,7 +6,7 @@ This plugin solves a single annoyance for me when it comes to taking notes about
 
 Instead of manually creating one [Obsidian](https://obsidian.md/) note per paper for a [zettelkasten](https://beingpax.medium.com/zettelkasten-method-with-obsidian-how-to-take-smart-notes-with-examples-cdaf348febbd), simply provide the URL and the plugin extracts the important information and creates a new note automatically. 
 
-*Update 10/204*: Basic OpenAI integration is available (but not required to be used) to generate tags and extract future work directions for papers where arxiv offers an HTML version.
+*Update 10/204*: Basic OpenAI integration is available (but not required to be used) to generate tags and extract future work directions for (some) arXiv papers.
 
 This (mostly) works for paper URLs from three domains:
 
@@ -14,9 +14,9 @@ This (mostly) works for paper URLs from three domains:
 - aclanthology, e.g. https://aclanthology.org/2022.acl-long.3/
 - semantischolar, e.g. https://www.semanticscholar.org/paper/Feature-Engineering-for-Second-Language-Acquisition-Chen-Hauff/75033c495638dcb2fb8ebc6211e5e5e0e8b93ea6
 
-If it is an arxiv paper, the ArXiv API is queried. The ACL Anthology isn't as simple to query, and since Semantic Scholar has most of the data ingested, the [Semantic Scholar API](https://www.semanticscholar.org/product/api) is queried with the respective aclanthology/semanticscholar identifier. 
+If it is an arXiv paper, the arXiv API is queried. The ACL Anthology isn't as simple to query, and since Semantic Scholar has most of the data ingested, the [Semantic Scholar API](https://www.semanticscholar.org/product/api) is queried with the respective aclanthology/semanticscholar identifier. 
 
-_Why querying ArXiv separately? Although Semantic Scholar also ingests papers posted on ArXiv I have found the ingested data to be more noisy (especially when it comes to the abstract) than ArXiv's version._
+_Why querying arXiv separately? Although Semantic Scholar also ingests papers posted on arXiv I have found the ingested data to be more noisy (especially when it comes to the abstract) than arXiv's version._
 
 > **Note**
 > This plugin was created in two evenings, it works but is brittle. Only tested on Desktop.
@@ -70,11 +70,11 @@ Open the settings tab of Obsidian. There should be the `Paper Note Filling` plug
 
 <img src="img/settings.png" width="600" alt="Obsidian settings tab">
 
-### OpenAI
+### OpenAIi integration
 
 There is nothing fancy going on under the hood, the prompts are listed in [prompts.ts](prompts.ts):
 - The tag selection prompt provides the LLM with an abstract and a list of all tags used in the vault and asks it to select up to five tags that fit the abstract.
-- The future work extraction prompt provides the LLM with raw text (not LaTeX but HTML -> text) and asks it to summarize the future work directions.
+- The future work extraction prompt provides the LLM with raw text (not LaTeX but HTML -> text) and asks it to summarize the future work directions. This is only possible for papers from arXiv that are availble in arXiv's experimental HTML format.
 
 In both cases, it is possible that the LLM calls fail (either because the endpoint changed, insufficient funds, etc.). In this case nothing further happens, apart from a notice on the screen. Setting the OpenAI key in the Settings tab to `N/A` avoids these notices.
 
@@ -109,7 +109,18 @@ In short:
     cd paper-note-filler
     ```
 2. Run `npm install`. If you don't have `npm` yet, you will need to install it first. If you haven't used `npm` in a long time, update it: `npm install -g npm@latest`. If you are still getting an error, check your `Node` version (and update it if necessary via `nvm install node --reinstall-packages-from=node`) and then try again `npm install`.
-3. Over time the packages listed in [package-lock.json](package-lock.json) and [package.json](package.json) become outdated. Check for dependcy updates by running `npm outdated` and update each listed package. Then run `npx npm-check-updates -u` to change the `package*.json` files. Rerun your build: `npm install`.
+3. Over time the packages listed in [package-lock.json](package-lock.json) and [package.json](package.json) To update them follow these steps:
+
+    1. Run `npm outdated` to see outdated dependencies. Update each listed package.
+    2. Clear node modules and cache:
+        ```bash
+        rm -rf node_modules
+        rm package-lock.json
+        npm cache clean --force
+        ```
+    3. Run `npx npm-check-updates -u` to update `package.json` to the latest versions.
+    4. Run `npm install` to regenerate `node_modules` and a fresh `package-lock.json` file.
+
 4. Run `npm run dev`. If all goes well, you now find a generated `main.js` file in your folder -- that is the compiled version of the plugin. That's it, the plugin is now compiled and ready to use. Updating the code will trigger a recompile.
 5. To actually see the output of the `console.log()` statements littered throughout the code, open the developer tools of Obsidian by heading to `View >> Toggle Developer Tools`.
 6. In [.github/workflows](.github/workflows/) a GitHub action is defined that triggers a new release after the following steps are taken (more details [here](https://docs.obsidian.md/Plugins/Releasing/Release+your+plugin+with+GitHub+Actions)):
@@ -117,3 +128,4 @@ In short:
    2. Once happy, increment the version number in [manifest.json](manifest.json), let's assume the version number increases from `1.0.2` to `1.0.3`. Commit.
    3. Then create a tag that matches the new version number by running `git tag -a 1.0.3 -m "1.0.3"` and then `git push origin 1.0.3`
    4. Check the Actions tab on GitHub, it should now be running the "Release Obsidian plugin" action (this can take some time).
+   5. If there are build issues, and it isn't an error in the plugin itself, it is probably about outdated package versions. Check step 3 above.
