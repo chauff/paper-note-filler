@@ -157,21 +157,22 @@ class urlModal extends Modal {
 	}
 
 	//generic prompting of OpenAI model(s)
-	async fetchOpenAICompletion(prompt: string): Promise<string> {
-		console.log("setting temperature to 1.0 for more creative responses.");
+	async fetchOpenAICompletion(prompt: string, context: string): Promise<string> {
+		// Show a notice with the context of the call
+		new Notice(`Querying OpenAI for ${context}... This may take a few seconds.`);
+
 		const payload = {
 			model: this.settings.openAIModel,
 			messages: [{ role: "user", content: prompt }],
-			temperature: 1.0
 		};
 
 		const response = await fetch(this.settings.openAIEndpoint, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				"Authorization": `Bearer ${this.settings.openAIKey}`
+				"Authorization": `Bearer ${this.settings.openAIKey}`,
 			},
-			body: JSON.stringify(payload)
+			body: JSON.stringify(payload),
 		});
 
 		if (!response.ok) {
@@ -196,7 +197,7 @@ class urlModal extends Modal {
 		}
 
 		const future_prompt = `${prompts.get('futureWork')}\n\nPaper: ${paper}`
-		return this.fetchOpenAICompletion(future_prompt)
+		return this.fetchOpenAICompletion(future_prompt, "future work")
 			.catch(error => {
 				new Notice(STRING_MAP.get("openAIError")!);
 				console.log(error);
@@ -214,7 +215,7 @@ class urlModal extends Modal {
 
 		const tag_prompt = `${prompts.get('generateTags')}\n\nAbstract: ${abstract}\n\nAvailable hashtags: ${tagsString}`;
 
-		return this.fetchOpenAICompletion(tag_prompt)
+		return this.fetchOpenAICompletion(tag_prompt, "tags generation")
 			.catch(error => {
 				new Notice(STRING_MAP.get("openAIError")!);
 				console.log(error);
