@@ -158,10 +158,11 @@ class urlModal extends Modal {
 
 	//generic prompting of OpenAI model(s)
 	async fetchOpenAICompletion(prompt: string): Promise<string> {
+		console.log("setting temperature to 1.0 for more creative responses.");
 		const payload = {
 			model: this.settings.openAIModel,
 			messages: [{ role: "user", content: prompt }],
-			temperature: 0.0 //no uncertainty
+			temperature: 1.0
 		};
 
 		const response = await fetch(this.settings.openAIEndpoint, {
@@ -174,6 +175,7 @@ class urlModal extends Modal {
 		});
 
 		if (!response.ok) {
+			console.log("ERROR RESPONSE FROM OPENAI:");
 			throw new Error(`Error ${response.status}: ${response.statusText}`);
 		}
 
@@ -371,9 +373,12 @@ class urlModal extends Modal {
 	extractFromArxiv(url: string) {
 		const id = this.getIdentifierFromUrl(url);
 
-		fetch(STRING_MAP.get("arXivRestAPI")! + id)
-			.then((response) => response.text())
-			.then((data) => {
+		// fetch(STRING_MAP.get("arXivRestAPI")! + id)
+		// 	.then((response) => response.text())
+		// 	.then((data) => {
+		requestUrl({ url: STRING_MAP.get("arXivRestAPI")! + id })
+			.then((response) => {
+				const data = response.text;
 				const parser = new DOMParser();
 				const xmlDoc = parser.parseFromString(data, "text/xml");
 
