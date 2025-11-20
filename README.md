@@ -1,3 +1,8 @@
+# Updates
+
+11/2025: In 1.0.7 fixed suddenly occuring CORS issues with the arxiv.org site.
+10/2024: In 1.0.6 basic OpenAI integration is available (but not required to be used) to generate tags and extract future work directions for (some) arXiv papers.
+
 # Academic paper URL to Obsidian Note
 
 <img align="right" width="250" height="250" src="img/logo.jpeg" alt="Logo">
@@ -5,8 +10,6 @@
 This plugin solves a single annoyance for me when it comes to taking notes about ML/NLP/IR papers - 90% of which happen to be available on [arxiv.org](https://arxiv.org/): the constant copy and paste to fill in a note template (author, title, etc.).
 
 Instead of manually creating one [Obsidian](https://obsidian.md/) note per paper for a [zettelkasten](https://beingpax.medium.com/zettelkasten-method-with-obsidian-how-to-take-smart-notes-with-examples-cdaf348febbd), simply provide the URL and the plugin extracts the important information and creates a new note automatically. 
-
-*Update 10/204*: Basic OpenAI integration is available (but not required to be used) to generate tags and extract future work directions for (some) arXiv papers.
 
 This (mostly) works for paper URLs from three domains:
 
