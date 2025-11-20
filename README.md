@@ -1,7 +1,7 @@
 # Updates
 
-11/2025: In 1.0.7 fixed suddenly occuring CORS issues with the arxiv.org site.
-10/2024: In 1.0.6 basic OpenAI integration is available (but not required to be used) to generate tags and extract future work directions for (some) arXiv papers.
+- 11/2025: In 1.0.7 fixed suddenly occuring CORS issues with the arxiv.org site.
+- 10/2024: In 1.0.6 basic OpenAI integration is available (but not required to be used) to generate tags and extract future work directions for (some) arXiv papers.
 
 # Academic paper URL to Obsidian Note
 
